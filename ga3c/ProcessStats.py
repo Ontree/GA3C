@@ -32,7 +32,7 @@ else:
 
 from datetime import datetime
 from multiprocessing import Process, Queue, Value
-
+import tensorflow as tf
 import numpy as np
 import time
 
@@ -58,8 +58,17 @@ class ProcessStats(Process):
     def TPS(self):
         # average TPS from the beginning of the training (not current TPS)
         return np.ceil(self.training_count.value / (time.time() - self.start_time))
+    
+    def add_summary(self, step, name, value, writer):
+        summary = tf.Summary()
+        summary_value = summary.value.add()
+        summary_value.simple_value = float(value)
+        summary_value.tag = name
+        writer.add_summary(summary, step)
 
     def run(self):
+	ses = tf.get_default_session()
+	writer = tf.summary.FileWriter("logs/%s" % Config.NETWORK_NAME, ses)
         with open(Config.RESULTS_FILENAME, 'a') as results_logger:
             rolling_frame_count = 0
             rolling_reward = 0
@@ -74,6 +83,7 @@ class ProcessStats(Process):
 
                 self.total_frame_count += length
                 self.episode_count.value += 1
+		self.add_summary(self.episode_count.value, 'reward_vs_episode', reward, writer)
 
                 rolling_frame_count += length
                 rolling_reward += reward

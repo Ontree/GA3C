@@ -30,7 +30,7 @@ class Config:
     # Game configuration
 
     # Name of the game, with version (e.g. PongDeterministic-v0)
-    ATARI_GAME = 'PongDeterministic-v0'
+    ATARI_GAME = 'MsPacman-v0'
 
     # Enable to see the trained agent in action
     PLAY_MODE = False
@@ -114,9 +114,9 @@ class Config:
     # Log and save
 
     # Enable TensorBoard
-    TENSORBOARD = False
+    TENSORBOARD = True
     # Update TensorBoard every X training steps
-    TENSORBOARD_UPDATE_FREQUENCY = 1000
+    TENSORBOARD_UPDATE_FREQUENCY = 10
 
     # Enable to save models every SAVE_FREQUENCY episodes
     SAVE_MODELS = True
@@ -128,10 +128,11 @@ class Config:
     # The window to average stats
     STAT_ROLLING_MEAN_WINDOW = 1000
 
-    # Results filename
-    RESULTS_FILENAME = 'results.txt'
     # Network checkpoint name
     NETWORK_NAME = 'network'
+
+    # Results filename
+    RESULTS_FILENAME = 'logs/' + NETWORK_NAME + '/results.txt'
 
     #########################################################################
     # More experimental parameters here
