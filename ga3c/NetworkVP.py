@@ -91,6 +91,16 @@ class NetworkVP:
         self.cost_v = 0.5 * tf.reduce_sum(tf.square(self.y_r - self.logits_v), axis=0)
 
         self.logits_p = self.dense_layer(self.d1, self.num_actions, 'logits_p', func=None)
+
+        # future prediction module
+        f_layer_1_dim = 256
+        self.f_d1 = self.dense_layer(self.d1, f_layer_1_dim, 'f_dense1', bias=False)
+        self.f_act_d1 = self.dense_layer(self.action_index, f_layer_1_dim, 'f_action_dense1', bias=False )
+        self.f_future = tf.multiply(self.f_d1, self.f_act_d1, 'f_future')
+        self.f_future_d1 = self.dense_layer(self.f_future, 256)
+        self.f_single_reward = tf.squeeze(self.dense_layer(self.f_future_d1, 1), axis=[1])
+        self.f_single_reward_cost = 0.5 * tf.reduce_sum(tf.square(self.y_s_r - self.f_single_reward), axis=0)
+
         if Config.USE_LOG_SOFTMAX:
             self.softmax_p = tf.nn.softmax(self.logits_p)
             self.log_softmax_p = tf.nn.log_softmax(self.logits_p)
@@ -125,8 +135,9 @@ class NetworkVP:
                 decay=Config.RMSPROP_DECAY,
                 momentum=Config.RMSPROP_MOMENTUM,
                 epsilon=Config.RMSPROP_EPSILON)
+            #TODO: Add future prediction losses
         else:
-            self.cost_all = self.cost_p + self.cost_v
+            self.cost_all = self.cost_p + self.cost_v + self.f_single_reward_cost
             self.opt = tf.train.RMSPropOptimizer(
                 learning_rate=self.var_learning_rate,
                 decay=Config.RMSPROP_DECAY,
@@ -178,16 +189,18 @@ class NetworkVP:
         self.summary_op = tf.summary.merge(summaries)
         self.log_writer = tf.summary.FileWriter(self.result_dir, self.sess.graph)
 
-    def dense_layer(self, input, out_dim, name, func=tf.nn.relu):
+    def dense_layer(self, input, out_dim, name, func=tf.nn.relu, bias=True):
         in_dim = input.get_shape().as_list()[-1]
         d = 1.0 / np.sqrt(in_dim)
         with tf.variable_scope(name):
             w_init = tf.random_uniform_initializer(-d, d)
             b_init = tf.random_uniform_initializer(-d, d)
             w = tf.get_variable('w', dtype=tf.float32, shape=[in_dim, out_dim], initializer=w_init)
-            b = tf.get_variable('b', shape=[out_dim], initializer=b_init)
-
-            output = tf.matmul(input, w) + b
+            if bias:
+                b = tf.get_variable('b', shape=[out_dim], initializer=b_init)
+                output = tf.matmul(input, w) + b
+            else:
+                output = tf.matmul(input, w)
             if func is not None:
                 output = func(output)
 
@@ -232,9 +245,9 @@ class NetworkVP:
     def predict_p_and_v(self, x):
         return self.sess.run([self.softmax_p, self.logits_v], feed_dict={self.x: x})
     
-    def train(self, x, y_r, a, trainer_id):
+    def train(self, x, y_r, a, y_s_r, trainer_id):
         feed_dict = self.__get_base_feed_dict()
-        feed_dict.update({self.x: x, self.y_r: y_r, self.action_index: a})
+        feed_dict.update({self.x: x, self.y_r: y_r, self.y_s_r: y_s_r, self.action_index: a})
         self.sess.run(self.train_op, feed_dict=feed_dict)
 
     def log(self, x, y_r, a):

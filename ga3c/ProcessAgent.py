@@ -60,13 +60,15 @@ class ProcessAgent(Process):
             r = np.clip(experiences[t].reward, Config.REWARD_MIN, Config.REWARD_MAX)
             reward_sum = discount_factor * reward_sum + r
             experiences[t].reward = reward_sum
+	    experiences[t].single_reward = r
         return experiences[:-1]
 
     def convert_data(self, experiences):
         x_ = np.array([exp.state for exp in experiences])
         a_ = np.eye(self.num_actions)[np.array([exp.action for exp in experiences])].astype(np.float32)
         r_ = np.array([exp.reward for exp in experiences])
-        return x_, r_, a_
+        s_r = np.array([exp.single_reward for exp in experiences])
+        return x_, r_, a_, s_r
 
     def predict(self, state):
         # put the state in the prediction q
@@ -107,8 +109,8 @@ class ProcessAgent(Process):
                 terminal_reward = 0 if done else value
 
                 updated_exps = ProcessAgent._accumulate_rewards(experiences, self.discount_factor, terminal_reward)
-                x_, r_, a_ = self.convert_data(updated_exps)
-                yield x_, r_, a_, reward_sum
+                x_, r_, a_, s_r = self.convert_data(updated_exps)
+                yield x_, r_, a_, s_r, reward_sum
 
                 # reset the tmax count
                 time_count = 0
@@ -126,8 +128,8 @@ class ProcessAgent(Process):
         while self.exit_flag.value == 0:
             total_reward = 0
             total_length = 0
-            for x_, r_, a_, reward_sum in self.run_episode():
+            for x_, r_, a_, s_r, reward_sum in self.run_episode():
                 total_reward += reward_sum
                 total_length += len(r_) + 1  # +1 for last frame that we drop
-                self.training_q.put((x_, r_, a_))
+                self.training_q.put((x_, r_, a_, s_r))
             self.episode_log_q.put((datetime.now(), total_reward, total_length))
