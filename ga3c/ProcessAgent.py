@@ -60,7 +60,7 @@ class ProcessAgent(Process):
             r = np.clip(experiences[t].reward, Config.REWARD_MIN, Config.REWARD_MAX)
             reward_sum = discount_factor * reward_sum + r
             experiences[t].reward = reward_sum
-	    experiences[t].single_reward = r
+            experiences[t].single_reward = r
         return experiences[:-1]
 
     def convert_data(self, experiences):
