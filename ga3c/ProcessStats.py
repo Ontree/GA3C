@@ -35,12 +35,11 @@ from multiprocessing import Process, Queue, Value
 import tensorflow as tf
 import numpy as np
 import time
-
 from Config import Config
 
 
 class ProcessStats(Process):
-    def __init__(self):
+    def __init__(self, log_writer):
         super(ProcessStats, self).__init__()
         self.episode_log_q = Queue(maxsize=100)
         self.episode_count = Value('i', 0)
@@ -50,6 +49,7 @@ class ProcessStats(Process):
         self.predictor_count = Value('i', 0)
         self.agent_count = Value('i', 0)
         self.total_frame_count = 0
+        self.log_writer = log_writer
 
     def FPS(self):
         # average FPS from the beginning of the training (not current FPS)
@@ -67,8 +67,7 @@ class ProcessStats(Process):
         writer.add_summary(summary, step)
 
     def run(self):
-	ses = tf.get_default_session()
-	writer = tf.summary.FileWriter("logs/%s" % Config.NETWORK_NAME, ses)
+        ses = tf.get_default_session()
         with open(Config.RESULTS_FILENAME, 'a') as results_logger:
             rolling_frame_count = 0
             rolling_reward = 0
@@ -83,7 +82,7 @@ class ProcessStats(Process):
 
                 self.total_frame_count += length
                 self.episode_count.value += 1
-		self.add_summary(self.episode_count.value, 'reward_vs_episode', reward, writer)
+                self.add_summary(self.episode_count.value, 'reward_vs_episode', reward, self.log_writer)
 
                 rolling_frame_count += length
                 rolling_reward += reward

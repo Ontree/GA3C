@@ -34,6 +34,7 @@ import gym
 
 from Config import Config
 from Server import Server
+import os
 
 # Parse arguments
 for i in range(1, len(sys.argv)):
@@ -41,6 +42,11 @@ for i in range(1, len(sys.argv)):
     # For setting booleans to False use Config=
     x, y = sys.argv[i].split('=')
     setattr(Config, x, type(getattr(Config, x))(y))
+
+Config.RESULT_DIR = '/media/bighdd6/minghai1/capstone/results/' + Config.NETWORK_NAME
+Config.RESULTS_FILENAME = Config.RESULT_DIR + '/results.txt'
+if not os.path.isdir(Config.RESULT_DIR):
+    os.makedirs(Config.RESULT_DIR)
 
 # Adjust configs for Play mode
 if Config.PLAY_MODE:
@@ -52,7 +58,6 @@ if Config.PLAY_MODE:
     Config.LOAD_CHECKPOINT = True
     Config.TRAIN_MODELS = False
     Config.SAVE_MODELS = False
-
 gym.undo_logger_setup()
 
 # Start main program

@@ -132,7 +132,7 @@ class Config:
     NETWORK_NAME = 'network'
 
     # Results filename
-    RESULTS_FILENAME = 'logs/' + NETWORK_NAME + '/results.txt'
+    RESULTS_FILENAME = '/media/bighdd6/minghai1/capstone/logs/' + NETWORK_NAME + '/results.txt'
 
     #########################################################################
     # More experimental parameters here

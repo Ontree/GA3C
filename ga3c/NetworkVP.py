@@ -37,7 +37,7 @@ class NetworkVP:
         self.device = device
         self.model_name = model_name
         self.num_actions = num_actions
-
+        self.result_dir = Config.RESULT_DIR
         self.img_width = Config.IMAGE_WIDTH
         self.img_height = Config.IMAGE_HEIGHT
         self.img_channels = Config.STACKED_FRAMES
@@ -176,7 +176,7 @@ class NetworkVP:
         summaries.append(tf.summary.histogram("activation_p", self.softmax_p))
 
         self.summary_op = tf.summary.merge(summaries)
-        self.log_writer = tf.summary.FileWriter("logs/%s" % self.model_name, self.sess.graph)
+        self.log_writer = tf.summary.FileWriter(self.result_dir, self.sess.graph)
 
     def dense_layer(self, input, out_dim, name, func=tf.nn.relu):
         in_dim = input.get_shape().as_list()[-1]
@@ -244,7 +244,7 @@ class NetworkVP:
         self.log_writer.add_summary(summary, step)
 
     def _checkpoint_filename(self, episode):
-        return 'checkpoints/%s_%08d' % (self.model_name, episode)
+        return '%s/checkpoint_%08d' % (self.result_dir, episode)
     
     def _get_episode_from_filename(self, filename):
         # TODO: hacky way of getting the episode. ideally episode should be stored as a TF variable
