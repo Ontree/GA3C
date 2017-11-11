@@ -42,9 +42,8 @@ class Server:
     def __init__(self):
         self.training_q = Queue(maxsize=Config.MAX_QUEUE_SIZE)
         self.prediction_q = Queue(maxsize=Config.MAX_QUEUE_SIZE)
-
+        self.stats = ProcessStats()
         self.model = NetworkVP(Config.DEVICE, Config.NETWORK_NAME, Environment().get_num_actions())
-        self.stats = ProcessStats(self.model.log_writer)
         if Config.LOAD_CHECKPOINT:
             self.stats.episode_count.value = self.model.load()
 

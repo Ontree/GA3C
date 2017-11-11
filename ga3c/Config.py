@@ -116,7 +116,7 @@ class Config:
     # Enable TensorBoard
     TENSORBOARD = True
     # Update TensorBoard every X training steps
-    TENSORBOARD_UPDATE_FREQUENCY = 10
+    TENSORBOARD_UPDATE_FREQUENCY = 1000
 
     # Enable to save models every SAVE_FREQUENCY episodes
     SAVE_MODELS = True

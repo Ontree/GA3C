@@ -39,7 +39,7 @@ from Config import Config
 
 
 class ProcessStats(Process):
-    def __init__(self, log_writer):
+    def __init__(self):
         super(ProcessStats, self).__init__()
         self.episode_log_q = Queue(maxsize=100)
         self.episode_count = Value('i', 0)
@@ -49,7 +49,6 @@ class ProcessStats(Process):
         self.predictor_count = Value('i', 0)
         self.agent_count = Value('i', 0)
         self.total_frame_count = 0
-        self.log_writer = log_writer
 
     def FPS(self):
         # average FPS from the beginning of the training (not current FPS)
@@ -67,7 +66,7 @@ class ProcessStats(Process):
         writer.add_summary(summary, step)
 
     def run(self):
-        ses = tf.get_default_session()
+        self.log_writer = tf.summary.FileWriter(Config.RESULT_DIR)
         with open(Config.RESULTS_FILENAME, 'a') as results_logger:
             rolling_frame_count = 0
             rolling_reward = 0
