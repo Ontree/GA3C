@@ -138,7 +138,7 @@ class Config:
     # More experimental parameters here
     
     # Minimum policy
-    MIN_POLICY = 0.0
+    MIN_POLICY = 0.01
     # Use log_softmax() instead of log(softmax())
     USE_LOG_SOFTMAX = False
 
