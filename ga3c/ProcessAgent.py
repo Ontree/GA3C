@@ -33,7 +33,7 @@ import time
 from Config import Config
 from Environment import Environment
 from Experience import Experience
-
+from ExperienceReplay import ExperienceFrame, ExperienceReplay
 
 class ProcessAgent(Process):
     def __init__(self, id, prediction_q, training_q, episode_log_q):
@@ -52,6 +52,8 @@ class ProcessAgent(Process):
         # one frame at a time
         self.wait_q = Queue(maxsize=1)
         self.exit_flag = Value('i', 0)
+
+        self.experience_replay = ExperienceReplay(Config.HISTORY_SIZE)
 
     @staticmethod
     def _accumulate_rewards(experiences, discount_factor, terminal_reward):
@@ -92,6 +94,7 @@ class ProcessAgent(Process):
         time_count = 0
         reward_sum = 0.0
 
+        prev_reward = 0.0
         while not done:
             # very first few frames
             if self.env.current_state is None:
@@ -100,10 +103,13 @@ class ProcessAgent(Process):
 
             prediction, value = self.predict(self.env.current_state)
             action = self.select_action(prediction)
-            reward, done = self.env.step(action)
+            frame, reward, done = self.env.step(action)
             reward_sum += reward
             exp = Experience(self.env.previous_state, action, prediction, reward, done)
             experiences.append(exp)
+
+            self.experience_replay.add_experience(frame, action, prev_reward)
+            prev_reward = reward
 
             if done or time_count == Config.TIME_MAX:
                 terminal_reward = 0 if done else value
@@ -131,5 +137,5 @@ class ProcessAgent(Process):
             for x_, r_, a_, s_r, reward_sum in self.run_episode():
                 total_reward += reward_sum
                 total_length += len(r_) + 1  # +1 for last frame that we drop
-                self.training_q.put((x_, r_, a_, s_r))
+                self.training_q.put({'base':(x_, r_, a_), 'reward':self.experience_replay.sample_sequence()})
             self.episode_log_q.put((datetime.now(), total_reward, total_length))

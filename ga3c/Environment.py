@@ -36,7 +36,6 @@ import scipy.misc as misc
 from Config import Config
 from GameManager import GameManager
 
-
 class Environment:
     def __init__(self):
         self.game = GameManager(Config.ATARI_GAME, display=Config.PLAY_MODE)
@@ -71,6 +70,7 @@ class Environment:
             self.frame_q.get()
         image = Environment._preprocess(frame)
         self.frame_q.put(image)
+        return image
 
     def get_num_actions(self):
         return self.game.env.action_space.n
@@ -85,8 +85,8 @@ class Environment:
         observation, reward, done, _ = self.game.step(action)
 
         self.total_reward += reward
-        self._update_frame_q(observation)
+        image = self._update_frame_q(observation)
 
         self.previous_state = self.current_state
         self.current_state = self._get_current_state()
-        return reward, done
+        return image, reward, done
