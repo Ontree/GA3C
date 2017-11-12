@@ -93,14 +93,18 @@ class NetworkVP:
         self.logits_p = self.dense_layer(self.d1, self.num_actions, 'logits_p', func=None)
 
         # future prediction module
-        f_layer_1_dim = 256
-        self.f_d1 = self.dense_layer(self.d1, f_layer_1_dim, 'f_dense1', bias=False)
-        self.f_act_d1 = self.dense_layer(self.action_index, f_layer_1_dim, 'f_action_dense1', bias=False )
-        self.f_future = tf.multiply(self.f_d1, self.f_act_d1, 'f_future')
-        self.f_future_d1 = self.dense_layer(self.f_future, 256, 'f_future_dense1')
         self.y_s_r = tf.placeholder(tf.float32, [None], name='Y_sr')
-        self.f_single_reward = tf.squeeze(self.dense_layer(self.f_future_d1, 1, 'f_single_reward'), axis=[1])
-        self.f_single_reward_cost = 0.5 * tf.reduce_sum(tf.square(self.y_s_r - self.f_single_reward), axis=0)
+        if Config.SINGLE_REWARD:
+            f_layer_1_dim = 256
+            self.f_d1 = self.dense_layer(self.d1, f_layer_1_dim, 'f_dense1', bias=False)
+            self.f_act_d1 = self.dense_layer(self.action_index, f_layer_1_dim, 'f_action_dense1', bias=False )
+            self.f_future = tf.multiply(self.f_d1, self.f_act_d1, 'f_future')
+            self.f_future_d1 = self.dense_layer(self.f_future, 256, 'f_future_dense1')
+            self.f_single_reward = tf.squeeze(self.dense_layer(self.f_future_d1, 1, 'f_single_reward'), axis=[1])
+            self.f_single_reward_cost = 0.5 * tf.reduce_sum(tf.square(self.y_s_r - self.f_single_reward), axis=0)
+        else:
+            self.f_single_reward_cost = 0
+
 
         if Config.USE_LOG_SOFTMAX:
             self.softmax_p = tf.nn.softmax(self.logits_p)

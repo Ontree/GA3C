@@ -141,3 +141,6 @@ class Config:
     MIN_POLICY = 0.0
     # Use log_softmax() instead of log(softmax())
     USE_LOG_SOFTMAX = False
+
+
+    SINGLE_REWARD = False
