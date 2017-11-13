@@ -115,13 +115,13 @@ class NetworkVP:
             self.sr_softmax_p = tf.nn.softmax(self.sr_logits_p)
             self.sr_label_onehot = tf.one_hot(self.sr_label, 3)
             self.sr_true_label_prob = tf.reduce_sum(self.sr_softmax_p * self.sr_label_onehot, axis=1)
-            self.sr_cross_entropy = -tf.reduce_sum(tf.log(tf.maximum(self.sr_softmax_p, self.log_epsilon)))
+            self.sr_cross_entropy = -tf.reduce_sum(tf.log(tf.maximum(self.sr_true_label_prob, self.log_epsilon)))
             self.opt_sr = tf.train.RMSPropOptimizer(
                 learning_rate=self.var_learning_rate,
                 decay=Config.RMSPROP_DECAY,
                 momentum=Config.RMSPROP_MOMENTUM,
                 epsilon=Config.RMSPROP_EPSILON)
-            self.train_op['sr'] = self.opt.minimize(self.sr_cross_entropy, global_step=self.global_step)
+            self.train_op['sr'] = self.opt_sr.minimize(self.sr_cross_entropy, global_step=self.global_step)
 
 
         if Config.USE_LOG_SOFTMAX:
@@ -152,7 +152,7 @@ class NetworkVP:
             decay=Config.RMSPROP_DECAY,
             momentum=Config.RMSPROP_MOMENTUM,
             epsilon=Config.RMSPROP_EPSILON)
-        self.train_op['base'] = self.opt.minimize(self.cost_base, global_step=self.global_step)
+        self.train_op['base'] = self.opt_base.minimize(self.cost_base, global_step=self.global_step)
 
         
         '''
