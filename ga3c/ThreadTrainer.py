@@ -56,6 +56,6 @@ class ThreadTrainer(Thread):
                     s_r_r__ = np.concatenate((s_r_r__, [s_r_r_]))
                     s_r_a__ = np.concatenate(((s_r_a__, [s_r_a_])))
                 batch_size += x_.shape[0]
-            
+            s_r_r__ = s_r_r__.astype(np.int32)
             if Config.TRAIN_MODELS:
                 self.server.train_model({'base':(x__, r__, a__), 'single_reward':(s_r_x__, s_r_r__, s_r_a__)}, self.id)
