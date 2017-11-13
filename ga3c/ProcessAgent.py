@@ -94,8 +94,9 @@ class ProcessAgent(Process):
 
         time_count = 0 
         reward_sum = 0.0
-        # for i in range(3):
-        #     self.experience_replay.add_experience(np.zeros((84,84)), None, None)
+        if Config.REPLAY_MEMORY:
+            for i in range(3):
+                self.experience_replay.add_experience(np.zeros((84,84)), None, None)
         while not done:
             # very first few frames
             if self.env.current_state is None:
@@ -108,8 +109,8 @@ class ProcessAgent(Process):
             reward_sum += reward
             exp = Experience(self.env.previous_state, action, prediction, reward, done)
             experiences.append(exp)
-
-            # self.experience_replay.add_experience(frame, action, reward)
+            if Config.REPLAY_MEMORY:
+                self.experience_replay.add_experience(frame, action, reward)
 
             if done or time_count == Config.TIME_MAX:
                 terminal_reward = 0 if done else value
@@ -138,14 +139,16 @@ class ProcessAgent(Process):
                 total_reward += reward_sum
                 total_length += len(r_) + 1  # +1 for last frame that we drop
                 batch_size = x_.shape[0]
-                sample_history = []
-                # for i in range(batch_size):
-                #     sample_history.append(self.experience_replay.sample_sequence())
-                # s_r_x = np.array([h[0] for h in sample_history])
-                # s_r_r = np.array([h[1] for h in sample_history])
-                # s_r_a = np.array([h[2] for h in sample_history])
-                s_r_x = np.zeros((batch_size, 84, 84, 4))
-                s_r_r = np.zeros((batch_size))
-                s_r_a = np.zeros((batch_size))
+                if Config.REPLAY_MEMORY:
+                    sample_history = []
+                    for i in range(batch_size):
+                        sample_history.append(self.experience_replay.sample_sequence())
+                    s_r_x = np.array([h[0] for h in sample_history])
+                    s_r_r = np.array([h[1] for h in sample_history])
+                    s_r_a = np.array([h[2] for h in sample_history])
+                else:
+                    s_r_x = np.zeros((batch_size, 84, 84, 4))
+                    s_r_r = np.zeros((batch_size))
+                    s_r_a = np.zeros((batch_size))
                 self.training_q.put({'base':(x_, r_, a_), 'single_reward':(s_r_x, s_r_r, s_r_a)})
             self.episode_log_q.put((datetime.now(), total_reward, total_length))
