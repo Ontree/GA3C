@@ -6,13 +6,14 @@ class ExperienceFrame:
     def __init__(self, frame, action, prev_r):
         self.frame = frame
         self.action = action
-        self.reward = np.clip(prev_r, -1, 1)
+        self.reward = .0
+        if prev_r == 0:
+            self.reward = 1.0
+        elif prev_r > 0:
+            self.reward = 2.0
+        else:
+            self.reward = .0
 
-class ExperienceState:
-    def __init__(self, state, action, prev_r):
-        self.state = state
-        self.action = action
-        self.reward = prev_r
 
 class ExperienceReplay:
     def __init__(self, history_size):
@@ -35,7 +36,7 @@ class ExperienceReplay:
         self._exps.append(exp)
 
         if frame_index >= 3:
-            if exp.reward == 0:
+            if prev_r == 0:
                 self._zero_reward_indices.append(frame_index)
             else:
                 self._non_zero_reward_indices.append(frame_index)
@@ -83,5 +84,5 @@ class ExperienceReplay:
         prev_r = self._exps[raw_start_frame_index + 3].reward
         state = np.array(sampled_frames)
         state = np.transpose(state, [1, 2, 0])
-        return (state, action, prev_r)
+        return (state, prev_r, action)
 

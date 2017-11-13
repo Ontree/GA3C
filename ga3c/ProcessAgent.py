@@ -137,5 +137,5 @@ class ProcessAgent(Process):
             for x_, r_, a_, s_r, reward_sum in self.run_episode():
                 total_reward += reward_sum
                 total_length += len(r_) + 1  # +1 for last frame that we drop
-                self.training_q.put({'base':(x_, r_, a_), 'reward':self.experience_replay.sample_sequence()})
+                self.training_q.put({'base':(x_, r_, a_), 'single_reward':self.experience_replay.sample_sequence()})
             self.episode_log_q.put((datetime.now(), total_reward, total_length))
