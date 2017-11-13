@@ -6,7 +6,8 @@ class ExperienceFrame:
     def __init__(self, frame, action, reward):
         self.frame = frame
         self.action = action
-        self.reward = .0
+        if reward == None:
+            return
         if reward == 0:
             self.reward = 1.0
         elif reward > 0:
@@ -34,10 +35,11 @@ class ExperienceReplay:
         was_full = self.is_full()
 
         self._exps.append(exp)
-        if reward == 0:
-            self._zero_reward_indices.append(frame_index)
-        elif reward != None:
-            self._non_zero_reward_indices.append(frame_index)
+        if reward != None:
+            if reward == 0:
+                self._zero_reward_indices.append(frame_index)
+            else:
+                self._non_zero_reward_indices.append(frame_index)
 
         if was_full:
             self._top_frame_index += 1
