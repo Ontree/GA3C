@@ -34,46 +34,47 @@ class ExperienceReplay:
         was_full = self.is_full()
 
         self._exps.append(exp)
-
-        if frame_index >= 3:
-            if reward == 0:
-                self._zero_reward_indices.append(frame_index)
-            else:
-                self._non_zero_reward_indices.append(frame_index)
+        if reward == 0:
+            self._zero_reward_indices.append(frame_index)
+        else:
+            self._non_zero_reward_indices.append(frame_index)
 
         if was_full:
             self._top_frame_index += 1
-            cut_frame_index = self._top_frame_index + 3
-            if len(self._zero_reward_indices) > 0 and self._zero_reward_indices[0] < cut_frame_index:
+            if len(self._zero_reward_indices) > 0 and self._zero_reward_indices[0] < self._top_frame_index:
                 self._zero_reward_indices.popleft()
-            if len(self._non_zero_reward_indices) > 0 and self._non_zero_reward_indices[0] < cut_frame_index:
+            if len(self._non_zero_reward_indices) > 0 and self._non_zero_reward_indices[0] < self._top_frame_index:
                 self._non_zero_reward_indices.popleft()
 
     def sample_sequence(self):
         """
         Sample 4 successive frames for reward prediction.
         """
-        if np.random.randint(2) == 0:
-            from_zero = True
-        else:
-            from_zero = False
+        while True:
+            if np.random.randint(2) == 0:
+                from_zero = True
+            else:
+                from_zero = False
 
-        if len(self._zero_reward_indices) == 0:
-            # zero rewards container was empty
-            from_zero = False
-        elif len(self._non_zero_reward_indices) == 0:
-            # non zero rewards container was empty
-            from_zero = True
+            if len(self._zero_reward_indices) == 0:
+                # zero rewards container was empty
+                from_zero = False
+            elif len(self._non_zero_reward_indices) == 0:
+                # non zero rewards container was empty
+                from_zero = True
 
-        if from_zero:
-            index = np.random.randint(len(self._zero_reward_indices))
-            end_frame_index = self._zero_reward_indices[index]
-        else:
-            index = np.random.randint(len(self._non_zero_reward_indices))
-            end_frame_index = self._non_zero_reward_indices[index]
+            if from_zero:
+                index = np.random.randint(len(self._zero_reward_indices))
+                end_frame_index = self._zero_reward_indices[index]
+            else:
+                index = np.random.randint(len(self._non_zero_reward_indices))
+                end_frame_index = self._non_zero_reward_indices[index]
 
-        start_frame_index = end_frame_index - 3
-        raw_start_frame_index = start_frame_index - self._top_frame_index
+            start_frame_index = end_frame_index - 3
+            raw_start_frame_index = start_frame_index - self._top_frame_index
+
+            if self._exps[raw_start_frame_index + 3].action != None:
+                break
 
         sampled_frames = []
 
