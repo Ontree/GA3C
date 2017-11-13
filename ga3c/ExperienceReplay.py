@@ -3,13 +3,13 @@ from collections import deque
 
 
 class ExperienceFrame:
-    def __init__(self, frame, action, prev_r):
+    def __init__(self, frame, action, reward):
         self.frame = frame
         self.action = action
         self.reward = .0
-        if prev_r == 0:
+        if reward == 0:
             self.reward = 1.0
-        elif prev_r > 0:
+        elif reward > 0:
             self.reward = 2.0
         else:
             self.reward = .0
@@ -28,15 +28,15 @@ class ExperienceReplay:
     def is_full(self):
         return len(self._exps) >= self._history_size
 
-    def add_experience(self, frame, action, prev_r):
-        exp = ExperienceFrame(frame, action, prev_r)
+    def add_experience(self, frame, action, reward):
+        exp = ExperienceFrame(frame, action, reward)
         frame_index = self._top_frame_index + len(self._exps)
         was_full = self.is_full()
 
         self._exps.append(exp)
 
         if frame_index >= 3:
-            if prev_r == 0:
+            if reward == 0:
                 self._zero_reward_indices.append(frame_index)
             else:
                 self._non_zero_reward_indices.append(frame_index)
@@ -44,9 +44,9 @@ class ExperienceReplay:
         if was_full:
             self._top_frame_index += 1
             cut_frame_index = self._top_frame_index + 3
-            if len(self._zero_reward_indices) > 0 and self._zero_reward_indices < cut_frame_index:
+            if len(self._zero_reward_indices) > 0 and self._zero_reward_indices[0] < cut_frame_index:
                 self._zero_reward_indices.popleft()
-            if len(self._non_zero_reward_indices) > 0 and self._non_zero_reward_indices < cut_frame_index:
+            if len(self._non_zero_reward_indices) > 0 and self._non_zero_reward_indices[0] < cut_frame_index:
                 self._non_zero_reward_indices.popleft()
 
     def sample_sequence(self):
