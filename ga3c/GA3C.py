@@ -45,6 +45,7 @@ for i in range(1, len(sys.argv)):
 
 Config.RESULT_DIR = '/media/bighdd6/minghai1/capstone/results/' + Config.NETWORK_NAME
 Config.RESULTS_FILENAME = Config.RESULT_DIR + '/results.txt'
+Config.REPLAY_MEMORY = Config.SINGLE_REWARD
 if not os.path.isdir(Config.RESULT_DIR):
     os.makedirs(Config.RESULT_DIR)
 

@@ -45,17 +45,25 @@ class ThreadTrainer(Thread):
             while batch_size <= Config.TRAINING_MIN_BATCH_SIZE:
                 training_data = self.server.training_q.get()
                 x_, r_, a_ = training_data['base']
-                s_r_x_, s_r_r_, s_r_a_ =  training_data['single_reward']
+                if Config.REPLAY_MEMORY:
+                    s_r_x_, s_r_r_, s_r_a_ =  training_data['single_reward']
+                else:
+                    s_r_x = None; s_r_r_ = None; s_r_a_ = None;
                 if batch_size == 0:
                     x__ = x_; r__ = r_; a__ = a_; s_r_x__ = s_r_x_; s_r_r__ = s_r_r_; s_r_a__ = s_r_a_;
                 else:
                     x__ = np.concatenate((x__, x_))
                     r__ = np.concatenate((r__, r_))
                     a__ = np.concatenate((a__, a_))
-                    s_r_x__ = np.concatenate((s_r_x__, s_r_x_))
-                    s_r_r__ = np.concatenate((s_r_r__, s_r_r_))
-                    s_r_a__ = np.concatenate((s_r_a__, s_r_a_))
+                    if Config.REPLAY_MEMORY:
+                        s_r_x__ = np.concatenate((s_r_x__, s_r_x_))
+                        s_r_r__ = np.concatenate((s_r_r__, s_r_r_))
+                        s_r_a__ = np.concatenate((s_r_a__, s_r_a_))
                 batch_size += x_.shape[0]
-            s_r_r__ = s_r_r__.astype(np.int32)
+            if Config.REPLAY_MEMORY:
+                s_r_r__ = s_r_r__.astype(np.int32)
             if Config.TRAIN_MODELS:
-                self.server.train_model({'base':(x__, r__, a__), 'single_reward':(s_r_x__, s_r_r__, s_r_a__)}, self.id)
+                if Config.REPLAY_MEMORY:
+                    self.server.train_model({'base':(x__, r__, a__), 'single_reward':(s_r_x__, s_r_r__, s_r_a__)}, self.id)
+                else:
+                    self.server.train_model({'base':(x__, r__, a__)})
