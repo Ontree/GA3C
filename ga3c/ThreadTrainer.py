@@ -58,4 +58,4 @@ class ThreadTrainer(Thread):
                 batch_size += x_.shape[0]
             
             if Config.TRAIN_MODELS:
-                self.server.train_model(x__, r__, a__, s_r_x__, s_r_r__, s_r_a__, self.id)
+                self.server.train_model({'base':(x__, r__, a__), 'single_reward':(s_r_x__, s_r_r__, s_r_a__)}, self.id)
