@@ -66,4 +66,4 @@ class ThreadTrainer(Thread):
                 if Config.REPLAY_MEMORY:
                     self.server.train_model({'base':(x__, r__, a__), 'single_reward':(s_r_x__, s_r_r__, s_r_a__)}, self.id)
                 else:
-                    self.server.train_model({'base':(x__, r__, a__)})
+                    self.server.train_model({'base':(x__, r__, a__)}, self.id)
