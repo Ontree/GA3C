@@ -92,6 +92,7 @@ class NetworkVP:
 
         self.logits_p = self.dense_layer(self.d1, self.num_actions, 'logits_p', func=None)
 
+        '''
         # future prediction module
         self.y_s_r = tf.placeholder(tf.float32, [None], name='Y_sr')
         if Config.SINGLE_REWARD:
@@ -104,6 +105,23 @@ class NetworkVP:
             self.f_single_reward_cost = 0.5 * tf.reduce_sum(tf.square(self.y_s_r - self.f_single_reward), axis=0)
         else:
             self.f_single_reward_cost = 0
+        '''
+        self.train_op = {}
+        if Config.SINGLE_REWARD:
+            self.sr_label = tf.placeholder(tf.int32, [None], name='Y_sr')
+            self.sr_fc_dim = 256
+            self.sr_d1 = self.dense_layer(self.d1, self.sr_fc_dim, 'sr_dense1')
+            self.sr_logits_p = self.dense_layer(self.sr_d1, 3, 'sr_logits_p', func=None)
+            self.sr_softmax_p = tf.nn.softmax(self.sr_logits_p)
+            self.sr_label_onehot = tf.one_hot(self.sr_label, 3)
+            self.sr_true_label_prob = tf.reduce_sum(self.sr_softmax_p * self.sr_label_onehot, axis=1)
+            self.sr_cross_entropy = -tf.reduce_sum(tf.log(tf.maximum(self.sr_softmax_p, self.log_epsilon)))
+            self.opt_sr = tf.train.RMSPropOptimizer(
+                learning_rate=self.var_learning_rate,
+                decay=Config.RMSPROP_DECAY,
+                momentum=Config.RMSPROP_MOMENTUM,
+                epsilon=Config.RMSPROP_EPSILON)
+            self.train_op['sr'] = self.opt.minimize(self.sr_cross_entropy, global_step=self.global_step)
 
 
         if Config.USE_LOG_SOFTMAX:
@@ -127,7 +145,17 @@ class NetworkVP:
         self.cost_p_1_agg = tf.reduce_sum(self.cost_p_1, axis=0)
         self.cost_p_2_agg = tf.reduce_sum(self.cost_p_2, axis=0)
         self.cost_p = -(self.cost_p_1_agg + self.cost_p_2_agg)
+
+        self.cost_base = self.cost_p + self.cost_v
+        self.opt_base = tf.train.RMSPropOptimizer(
+            learning_rate=self.var_learning_rate,
+            decay=Config.RMSPROP_DECAY,
+            momentum=Config.RMSPROP_MOMENTUM,
+            epsilon=Config.RMSPROP_EPSILON)
+        self.train_op['base'] = self.opt.minimize(self.cost_base, global_step=self.global_step)
+
         
+        '''
         if Config.DUAL_RMSPROP:
             self.opt_p = tf.train.RMSPropOptimizer(
                 learning_rate=self.var_learning_rate,
@@ -140,9 +168,9 @@ class NetworkVP:
                 decay=Config.RMSPROP_DECAY,
                 momentum=Config.RMSPROP_MOMENTUM,
                 epsilon=Config.RMSPROP_EPSILON)
-            #TODO: Add future prediction losses
+            
         else:
-            self.cost_all = self.cost_p + self.cost_v + self.f_single_reward_cost
+            self.cost_all = self.cost_p + self.cost_v
             self.opt = tf.train.RMSPropOptimizer(
                 learning_rate=self.var_learning_rate,
                 decay=Config.RMSPROP_DECAY,
@@ -172,6 +200,10 @@ class NetworkVP:
                 self.train_op = [self.train_op_p, self.train_op_v]
             else:
                 self.train_op = self.opt.minimize(self.cost_all, global_step=self.global_step)
+        '''
+        
+        
+        
 
 
     def _create_tensor_board(self):
@@ -250,12 +282,24 @@ class NetworkVP:
     def predict_p_and_v(self, x):
         return self.sess.run([self.softmax_p, self.logits_v], feed_dict={self.x: x})
     
+    '''
     def train(self, x, y_r, a, y_s_r, trainer_id):
         feed_dict = self.__get_base_feed_dict()
         feed_dict.update({self.x: x, self.y_r: y_r, self.y_s_r: y_s_r, self.action_index: a})
         self.sess.run(self.train_op, feed_dict=feed_dict)
+    '''
 
-    def log(self, x, y_r, a):
+    def train(self, inputs, trainer_id):
+        feed_dict = self.__get_base_feed_dict()
+        feed_dict.update({self.x: inputs['base'][0], self.y_r: inputs['base'][1], self.action_index: inputs['base'][2]})
+        self.sess.run(self.train_op['base'], feed_dict=feed_dict)
+        if Config.SINGLE_REWARD:
+            feed_dict = self.__get_base_feed_dict()
+            feed_dict.update({self.x: inputs['single_reward'][0], self.sr_label: inputs['single_reward'][1], self.action_index: inputs['single_reward'][2]})
+            self.sess.run(self.train_op['sr'], feed_dict=feed_dict)
+
+
+    def log(self, (x, y_r, a)):
         feed_dict = self.__get_base_feed_dict()
         feed_dict.update({self.x: x, self.y_r: y_r, self.action_index: a})
         step, summary = self.sess.run([self.global_step, self.summary_op], feed_dict=feed_dict)
