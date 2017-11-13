@@ -141,8 +141,8 @@ class ProcessAgent(Process):
                 sample_history = []
                 for i in range(batch_size):
                     sample_history.append(self.experience_replay.sample_sequence())
-                s_r_x = [h[0] for h in sample_history]
-                s_r_r = [h[1] for h in sample_history]
-                s_r_a = [h[2] for h in sample_history]
+                s_r_x = np.array([h[0] for h in sample_history])
+                s_r_r = np.array([h[1] for h in sample_history])
+                s_r_a = np.array([h[2] for h in sample_history])
                 self.training_q.put({'base':(x_, r_, a_), 'single_reward':(s_r_x, s_r_r, s_r_a)})
             self.episode_log_q.put((datetime.now(), total_reward, total_length))
