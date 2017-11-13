@@ -92,7 +92,7 @@ class ProcessAgent(Process):
         done = False
         experiences = []
 
-        time_count = 0
+        time_count = 0 
         reward_sum = 0.0
         if Config.REPLAY_MEMORY:
             for i in range(3):

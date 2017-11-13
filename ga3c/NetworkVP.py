@@ -295,11 +295,12 @@ class NetworkVP:
         self.sess.run(self.train_op['base'], feed_dict=feed_dict)
         if Config.SINGLE_REWARD:
             feed_dict = self.__get_base_feed_dict()
-            feed_dict.update({self.x: inputs['single_reward'][0], self.sr_label: inputs['single_reward'][1], self.action_index: inputs['single_reward'][2]})
+            feed_dict.update({self.x: inputs['single_reward'][0], self.sr_label: inputs['single_reward'][1]})
             self.sess.run(self.train_op['sr'], feed_dict=feed_dict)
 
 
-    def log(self, (x, y_r, a)):
+    def log(self, log_input):
+        x, y_r, a = log_input
         feed_dict = self.__get_base_feed_dict()
         feed_dict.update({self.x: x, self.y_r: y_r, self.action_index: a})
         step, summary = self.sess.run([self.global_step, self.summary_op], feed_dict=feed_dict)
