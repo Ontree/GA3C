@@ -145,3 +145,4 @@ class Config:
 
     SINGLE_REWARD = False
     HISTORY_SIZE = 2000
+    REPLAY_MEMORY = False
