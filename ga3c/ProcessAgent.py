@@ -86,6 +86,7 @@ class ProcessAgent(Process):
             action = np.random.choice(self.actions, p=prediction)
         return action
 
+
     def run_episode(self):
         self.env.reset()
         done = False
@@ -136,5 +137,12 @@ class ProcessAgent(Process):
             for x_, r_, a_, s_r, reward_sum in self.run_episode():
                 total_reward += reward_sum
                 total_length += len(r_) + 1  # +1 for last frame that we drop
-                self.training_q.put({'base':(x_, r_, a_), 'single_reward':self.experience_replay.sample_sequence()})
+                batch_size = x_.shape[0]
+                sample_history = []
+                for i in range(batch_size):
+                    sample_history.append(self.experience_replay.sample_sequence())
+                s_r_x = [h[0] for h in sample_history]
+                s_r_r = [h[1] for h in sample_history]
+                s_r_a = [h[2] for h in sample_history]
+                self.training_q.put({'base':(x_, r_, a_), 'single_reward':(s_r_x, s_r_r, s_r_a)})
             self.episode_log_q.put((datetime.now(), total_reward, total_length))

@@ -36,54 +36,55 @@ class ExperienceReplay:
         self._exps.append(exp)
         if reward == 0:
             self._zero_reward_indices.append(frame_index)
-        else:
+        elif reward != None:
             self._non_zero_reward_indices.append(frame_index)
 
         if was_full:
             self._top_frame_index += 1
-            if len(self._zero_reward_indices) > 0 and self._zero_reward_indices[0] < self._top_frame_index:
+            while len(self._zero_reward_indices) > 0 and self._zero_reward_indices[0] < self._top_frame_index:
                 self._zero_reward_indices.popleft()
-            if len(self._non_zero_reward_indices) > 0 and self._non_zero_reward_indices[0] < self._top_frame_index:
+            while len(self._non_zero_reward_indices) > 0 and self._non_zero_reward_indices[0] < self._top_frame_index:
                 self._non_zero_reward_indices.popleft()
 
     def sample_sequence(self):
         """
         Sample 4 successive frames for reward prediction.
         """
-        while True:
-            if np.random.randint(2) == 0:
-                from_zero = True
-            else:
-                from_zero = False
+        if np.random.randint(2) == 0:
+            from_zero = True
+        else:
+            from_zero = False
 
-            if len(self._zero_reward_indices) == 0:
-                # zero rewards container was empty
-                from_zero = False
-            elif len(self._non_zero_reward_indices) == 0:
-                # non zero rewards container was empty
-                from_zero = True
+        if len(self._zero_reward_indices) == 0 and len(self._non_zero_reward_indices) == 0:
+            raise RuntimeError("no valid frames")
 
-            if from_zero:
-                index = np.random.randint(len(self._zero_reward_indices))
-                end_frame_index = self._zero_reward_indices[index]
-            else:
-                index = np.random.randint(len(self._non_zero_reward_indices))
-                end_frame_index = self._non_zero_reward_indices[index]
+        if len(self._zero_reward_indices) == 0:
+            # zero rewards container was empty
+            from_zero = False
+        elif len(self._non_zero_reward_indices) == 0:
+            # non zero rewards container was empty
+            from_zero = True
 
-            start_frame_index = end_frame_index - 3
-            raw_start_frame_index = start_frame_index - self._top_frame_index
+        if from_zero:
+            index = np.random.randint(len(self._zero_reward_indices))
+            end_frame_index = self._zero_reward_indices[index]
+        else:
+            index = np.random.randint(len(self._non_zero_reward_indices))
+            end_frame_index = self._non_zero_reward_indices[index]
 
-            if self._exps[raw_start_frame_index + 3].action != None:
-                break
+        start_frame_index = end_frame_index - 3
+        raw_start_frame_index = start_frame_index - self._top_frame_index
+
 
         sampled_frames = []
 
         for i in range(4):
             frame = self._exps[raw_start_frame_index + i].frame
             sampled_frames.append(frame)
+
         action = self._exps[raw_start_frame_index + 3].action
-        prev_r = self._exps[raw_start_frame_index + 3].reward
+        reward = self._exps[raw_start_frame_index + 3].reward
         state = np.array(sampled_frames)
         state = np.transpose(state, [1, 2, 0])
-        return (state, prev_r, action)
+        return (state, reward, action)
 
