@@ -92,7 +92,7 @@ class ProcessAgent(Process):
         done = False
         experiences = []
 
-        time_count = 0
+        time_count = 0 
         reward_sum = 0.0
         # for i in range(3):
         #     self.experience_replay.add_experience(np.zeros((84,84)), None, None)
