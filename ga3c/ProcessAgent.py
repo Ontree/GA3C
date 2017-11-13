@@ -94,8 +94,8 @@ class ProcessAgent(Process):
 
         time_count = 0
         reward_sum = 0.0
-        for i in range(3):
-            self.experience_replay.add_experience(np.zeros((84,84)), None, None)
+        # for i in range(3):
+        #     self.experience_replay.add_experience(np.zeros((84,84)), None, None)
         while not done:
             # very first few frames
             if self.env.current_state is None:
@@ -109,7 +109,7 @@ class ProcessAgent(Process):
             exp = Experience(self.env.previous_state, action, prediction, reward, done)
             experiences.append(exp)
 
-            self.experience_replay.add_experience(frame, action, reward)
+            # self.experience_replay.add_experience(frame, action, reward)
 
             if done or time_count == Config.TIME_MAX:
                 terminal_reward = 0 if done else value
