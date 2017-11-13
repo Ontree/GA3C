@@ -48,7 +48,7 @@ class ThreadTrainer(Thread):
                 if Config.REPLAY_MEMORY:
                     s_r_x_, s_r_r_, s_r_a_ =  training_data['single_reward']
                 else:
-                    s_r_x = None; s_r_r_ = None; s_r_a_ = None;
+                    s_r_x_ = None; s_r_r_ = None; s_r_a_ = None;
                 if batch_size == 0:
                     x__ = x_; r__ = r_; a__ = a_; s_r_x__ = s_r_x_; s_r_r__ = s_r_r_; s_r_a__ = s_r_a_;
                 else:
